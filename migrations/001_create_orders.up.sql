@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS orders (
+    id VARCHAR(255) PRIMARY KEY,
+    product_ids VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL
+    );

@@ -4,3 +4,12 @@ services:
     image: redis:7
     ports:
       - 6379:6379
+  postgres:
+    container_name: "messaging-cli-postgres"
+    image: postgres:18
+    environment:
+      POSTGRES_USER: orderuser
+      POSTGRES_PASSWORD: orderpass
+      POSTGRES_DB: orderdb
+    ports:
+      - "5432:5432"

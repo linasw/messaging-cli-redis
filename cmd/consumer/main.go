@@ -5,14 +5,20 @@ import (
 	"fmt"
 	"github.com/ThreeDotsLabs/watermill"
 	"messaging-cli/internal/redis"
+	"messaging-cli/internal/repository/postgres"
 	"os"
 	"os/signal"
 )
 
 func main() {
+	dbPool, err := postgres.NewPool()
+	if err != nil {
+		panic(err)
+	}
+	orderRepository := postgres.NewOrderRepository(dbPool)
 	watermillLogger := watermill.NewSlogLogger(nil)
 	redisClient := redis.NewRedisClient()
-	router := redis.NewWatermillRouter(redisClient, watermillLogger)
+	router := redis.NewWatermillRouter(redisClient, orderRepository, watermillLogger)
 
 	consumerError := make(chan error, 1)
 	go func() {

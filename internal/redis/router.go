@@ -1,16 +1,24 @@
 package redis
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-redisstream/pkg/redisstream"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/redis/go-redis/v9"
-	"messaging-cli/internal/entities"
+	"messaging-cli/internal/domain"
+	"messaging-cli/internal/repository/postgres"
+	"strings"
 )
 
-func NewWatermillRouter(rdb *redis.Client, watermillLogger watermill.LoggerAdapter) *message.Router {
+func NewWatermillRouter(
+	rdb *redis.Client,
+	orderRepository *postgres.OrderRepository,
+	watermillLogger watermill.LoggerAdapter,
+) *message.Router {
+	ctx := context.Background()
 	router := message.NewDefaultRouter(watermillLogger)
 
 	orderCreatedSub, err := redisstream.NewSubscriber(redisstream.SubscriberConfig{
@@ -34,7 +42,7 @@ func NewWatermillRouter(rdb *redis.Client, watermillLogger watermill.LoggerAdapt
 		"order-created",
 		orderCreatedSub,
 		func(msg *message.Message) error {
-			var orderCreated entities.OrderCreated
+			var orderCreated domain.OrderCreated
 			err := json.Unmarshal(msg.Payload, &orderCreated)
 			if err != nil {
 				return err
@@ -46,6 +54,18 @@ func NewWatermillRouter(rdb *redis.Client, watermillLogger watermill.LoggerAdapt
 				fmt.Printf("ProductID: %s\n", prod)
 			}
 
+			productIDs := strings.Join(orderCreated.ProductIDs, ",")
+			order := domain.Order{
+				ID:         orderCreated.OrderID,
+				ProductIDs: productIDs,
+				Status:     domain.OrderStatusNew,
+			}
+
+			err = orderRepository.Create(ctx, &order)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		})
 
@@ -54,7 +74,7 @@ func NewWatermillRouter(rdb *redis.Client, watermillLogger watermill.LoggerAdapt
 		"order-completed",
 		orderCompletedSub,
 		func(msg *message.Message) error {
-			var orderCompleted entities.OrderCompleted
+			var orderCompleted domain.OrderCompleted
 			err := json.Unmarshal(msg.Payload, &orderCompleted)
 			if err != nil {
 				return err
@@ -62,6 +82,11 @@ func NewWatermillRouter(rdb *redis.Client, watermillLogger watermill.LoggerAdapt
 
 			fmt.Println("Got order-completed message")
 			fmt.Printf("OrderID: %s\n", orderCompleted.OrderID)
+
+			err = orderRepository.Complete(ctx, orderCompleted.OrderID)
+			if err != nil {
+				return err
+			}
 
 			return nil
 		})

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
-	"messaging-cli/internal/entities"
+	"messaging-cli/internal/domain"
 	"messaging-cli/internal/redis"
 	"os"
 )
@@ -54,7 +54,7 @@ func main() {
 			fmt.Println("    Product ID:", id)
 		}
 
-		orderCreated := entities.OrderCreated{
+		orderCreated := domain.OrderCreated{
 			OrderID:    *orderCreatedIdPtr,
 			ProductIDs: productIds,
 		}
@@ -73,7 +73,7 @@ func main() {
 		fmt.Println("Creating topic: order-completed")
 		fmt.Println("    Order ID:", *orderCompletedIdPtr)
 
-		orderCompleted := entities.OrderCompleted{
+		orderCompleted := domain.OrderCompleted{
 			OrderID: *orderCompletedIdPtr,
 		}
 		payload, err := json.Marshal(&orderCompleted)
