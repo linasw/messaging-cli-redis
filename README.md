@@ -6,6 +6,8 @@ Using flags to get the arguments.
 
 Using Redis as a messaging tool.
 
+Using Postgres as DB to store orders.
+
 Using Watermill to send and retrieve the messages.
 
 ## How to run
