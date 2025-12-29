@@ -2,32 +2,16 @@ package test
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"messaging-cli/internal/domain"
 	"messaging-cli/internal/repository/postgres"
+	"messaging-cli/testhelpers"
 	"testing"
 )
 
-func setupTestDB(t *testing.T) *pgxpool.Pool {
-	connString := "host=localhost port=5432 user=orderuser password=orderpass dbname=orderdb"
-
-	poolConfig, err := pgxpool.ParseConfig(connString)
-	require.NoError(t, err)
-
-	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
-	require.NoError(t, err)
-
-	//clean up Orders DB
-	_, err = pool.Exec(context.Background(), "DELETE FROM orders")
-	require.NoError(t, err)
-
-	return pool
-}
-
 func TestOrderRepository_Create(t *testing.T) {
-	pool := setupTestDB(t)
+	pool := testhelpers.SetupTestDB(t)
 	defer pool.Close()
 
 	ctx := context.Background()
@@ -73,7 +57,7 @@ func TestOrderRepository_Create(t *testing.T) {
 }
 
 func TestOrderRepository_Complete(t *testing.T) {
-	pool := setupTestDB(t)
+	pool := testhelpers.SetupTestDB(t)
 	defer pool.Close()
 
 	ctx := context.Background()
